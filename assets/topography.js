@@ -133,6 +133,7 @@
     if (!getTileset()) {notify('Abre un modelo 3D antes de usar Topografía.');return;}
     stopMeasurements();
     window.GeoBIMProfiles?.close();
+    window.GeoBIMLevels?.close();
     active=true; reset(true);
     notify('Selecciona el punto A y luego el punto B sobre el modelo.');
   }

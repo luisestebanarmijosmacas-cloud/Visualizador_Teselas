@@ -1,4 +1,4 @@
-/* GeoBIM Viewer. CesiumJS 1.138.0 | Aplicación estática para GitHub Pages. */
+/* GeoBIM Viewer v2.0. CesiumJS 1.138.0 | GitHub Pages. */
 (() => {
   'use strict';
   const $ = id => document.getElementById(id);
@@ -6,6 +6,23 @@
   let viewer, currentTileset = null, currentModel = null;
   let toastTimer = null, measuring = false, measurePoints = [], measureEntities = [];
   let clicks;
+
+  // Escala de renderizado + refinamiento de teselas; el LOD no inventa detalles.
+  const QUALITY = [
+    {name: 'Rápida', scale: 0.60, sse: 48},
+    {name: 'Equilibrada', scale: 0.80, sse: 24},
+    {name: 'Alta', scale: 1.00, sse: 10},
+    {name: 'Máxima', scale: 1.25, sse: 4}
+  ];
+  const VIEW_DIRECTIONS = {
+    top:   {name: 'Planta',    heading: 0,                  pitch: -Math.PI / 2},
+    north: {name: 'Norte',     heading: Math.PI,            pitch: -0.08},
+    south: {name: 'Sur',       heading: 0,                  pitch: -0.08},
+    east:  {name: 'Este',      heading: -Math.PI / 2,       pitch: -0.08},
+    west:  {name: 'Oeste',     heading: Math.PI / 2,        pitch: -0.08},
+    iso:   {name: 'Isométrica',heading: -Math.PI / 4,       pitch: -Math.PI / 4}
+  };
+  let orthographic = false;
 
   function notify(message) {
     const t = $('toast');
@@ -85,7 +102,7 @@
       const url = normalizeTilesetUrl(model.url);
       // Este modelo puede estar en GitHub Pages o en almacenamiento externo con CORS.
       const tileset = await Cesium.Cesium3DTileset.fromUrl(url, {
-        maximumScreenSpaceError: Number($('qualityRange').value),
+        maximumScreenSpaceError: QUALITY[Number($('qualityRange').value)].sse,
         enableDebugWireframe: false
       });
       // Si la selección cambió mientras descargábamos, descartar la carga antigua.
@@ -165,10 +182,57 @@
     catch (_e) { window.prompt('Copia la URL del visor:', url); }
   }
   function setQuality() {
-    const value = Number($('qualityRange').value);
-    $('qualityLabel').textContent = value <= 8 ? 'Máxima' : value <= 16 ? 'Alta' : 'Media';
-    if (currentTileset) currentTileset.maximumScreenSpaceError = value;
-    if (viewer) viewer.scene.requestRender();
+    const preset = QUALITY[Number($('qualityRange').value)] || QUALITY[2];
+    $('qualityLabel').textContent = preset.name;
+    $('qualityDetails').textContent = 'Resolución ' + Math.round(preset.scale * 100) + '% · umbral LOD ' + preset.sse + ' px';
+    $('qualityRange').setAttribute('aria-valuetext', preset.name + ', resolución ' + Math.round(preset.scale * 100) + ' por ciento');
+    if (currentTileset) currentTileset.maximumScreenSpaceError = preset.sse;
+    if (viewer) {
+      viewer.resolutionScale = preset.scale;
+      viewer.scene.requestRender();
+    }
+  }
+
+  function updateViewCube() {
+    if (!viewer) return;
+    // Cesium entrega rumbo y elevación de cámara; el cubo sigue la orientación real.
+    const heading = Cesium.Math.toDegrees(viewer.camera.heading);
+    const pitch = Cesium.Math.toDegrees(viewer.camera.pitch);
+    $('viewCube').style.transform = 'rotateX(' + pitch.toFixed(2) + 'deg) rotateY(' + heading.toFixed(2) + 'deg)';
+  }
+
+  function selectView(viewName) {
+    if (!viewer || !currentTileset) {
+      notify('Carga un modelo 3D antes de elegir una vista.');
+      return;
+    }
+    const preset = VIEW_DIRECTIONS[viewName];
+    if (!preset) return;
+    const sphere = currentTileset.boundingSphere;
+    const distance = Cesium.Cartesian3.distance(viewer.camera.positionWC, sphere.center);
+    const range = Math.max(sphere.radius * 1.65, Number.isFinite(distance) ? distance : 0, 25);
+
+    // HeadingPitchRange está definido en coordenadas locales Este-Norte-Arriba.
+    // La vista Planta mira verticalmente hacia abajo, con el norte arriba.
+    viewer.camera.flyToBoundingSphere(sphere, {
+      duration: 0.85,
+      offset: new Cesium.HeadingPitchRange(preset.heading, preset.pitch, range),
+      complete: () => viewer.scene.requestRender()
+    });
+    $('viewLabel').textContent = 'VISTA · ' + preset.name.toUpperCase();
+    document.querySelectorAll('[data-view]').forEach(btn => {
+      btn.setAttribute('aria-pressed', String(btn.dataset.view === viewName));
+    });
+  }
+
+  function setProjection(isOrtho) {
+    if (!viewer) return;
+    orthographic = isOrtho;
+    if (orthographic) viewer.camera.switchToOrthographicFrustum();
+    else viewer.camera.switchToPerspectiveFrustum();
+    $('projectionToggle').setAttribute('aria-pressed', String(orthographic));
+    $('projectionToggle').textContent = orthographic ? 'Ortográfica: activada' : 'Ortográfica: desactivada';
+    viewer.scene.requestRender();
   }
 
   function bootstrap() {
@@ -210,6 +274,14 @@
       $('measureBtn').addEventListener('click', () => measuring ? resetMeasure() : beginMeasure());
       $('resetMeasureBtn').addEventListener('click', () => { resetMeasure(); notify('Mediciones eliminadas.'); });
       $('qualityRange').addEventListener('input', setQuality);
+      document.querySelectorAll('[data-view]').forEach(btn => {
+        btn.addEventListener('click', () => selectView(btn.dataset.view));
+      });
+      $('projectionToggle').addEventListener('click', () => setProjection(!orthographic));
+      $('cesiumContainer').addEventListener('pointerdown', () => {
+        $('viewLabel').textContent = 'VISTA · LIBRE';
+        document.querySelectorAll('[data-view]').forEach(btn => btn.setAttribute('aria-pressed', 'false'));
+      }, {passive: true});
       $('globeToggle').addEventListener('change', e => { viewer.scene.globe.show = e.target.checked; viewer.scene.requestRender(); });
       $('shareBtn').addEventListener('click', share);
       viewer.camera.changed.addEventListener(() => {
@@ -218,8 +290,9 @@
         const lat = Cesium.Math.toDegrees(position.latitude).toFixed(4);
         const lon = Cesium.Math.toDegrees(position.longitude).toFixed(4);
         $('coords').textContent = `CÁMARA · ${lat}°, ${lon}° · ${Math.max(0, position.height).toFixed(0)} m`;
+        updateViewCube();
       });
-      renderModels(); setQuality();
+      renderModels(); setQuality(); updateViewCube();
       const params = new URLSearchParams(window.location.search);
       const external = params.get('tileset');
       if (external) {

@@ -8,7 +8,7 @@
   <title>GeoBIM Viewer · Portafolio 3D</title>
   <script>window.CESIUM_BASE_URL = 'https://cdn.jsdelivr.net/npm/cesium@1.138.0/Build/Cesium/';</script>
   <link href="https://cdn.jsdelivr.net/npm/cesium@1.138.0/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
-  <link href="assets/style.css" rel="stylesheet">
+  <link href="assets/style.css?v=2" rel="stylesheet">
 </head>
 <body>
   <div class="layout">
@@ -35,8 +35,28 @@
         <div class="view-top-left"><span class="system-label">ESPACIO DE VISUALIZACIÓN 3D</span><span class="model-type" id="modelType">3D TILES</span></div>
         <div class="view-top-right"><button type="button" class="tool-btn" id="zoomBtn" title="Enfocar modelo">◎ <span>Encuadrar</span></button><button type="button" class="tool-btn" id="measureBtn" title="Medir entre dos puntos">⌁ <span>Medir</span></button><button type="button" class="tool-btn" id="resetMeasureBtn" title="Borrar medición">× <span>Limpiar</span></button></div>
         <div class="loading-layer" id="loadingLayer" role="status"><div class="load-spinner"></div><strong id="loadingTitle">Preparando escena…</strong><span id="loadingDetail">Inicializando motor 3D</span></div>
+        <div class="orientation-widget" aria-label="ViewCube y vistas del modelo">
+          <div class="orientation-title"><span>VIEWCUBE</span><small id="viewLabel">VISTA · LIBRE</small></div>
+          <div class="cube-stage"><div class="view-cube" id="viewCube">
+            <button type="button" class="cube-face face-front" data-view="south" aria-label="Vista desde el sur" title="Vista sur">S</button>
+            <button type="button" class="cube-face face-back" data-view="north" aria-label="Vista desde el norte" title="Vista norte">N</button>
+            <button type="button" class="cube-face face-right" data-view="east" aria-label="Vista desde el este" title="Vista este">E</button>
+            <button type="button" class="cube-face face-left" data-view="west" aria-label="Vista desde el oeste" title="Vista oeste">O</button>
+            <button type="button" class="cube-face face-top" data-view="top" aria-label="Vista de planta" title="Planta">SUP</button>
+            <div class="cube-face face-bottom" aria-hidden="true">INF</div>
+          </div></div>
+          <div class="orientation-presets" aria-label="Vistas rápidas">
+            <button type="button" data-view="top" title="Vista vertical de planta">Planta</button>
+            <button type="button" data-view="north" title="Mirar desde el norte">N</button>
+            <button type="button" data-view="east" title="Mirar desde el este">E</button>
+            <button type="button" data-view="south" title="Mirar desde el sur">S</button>
+            <button type="button" data-view="west" title="Mirar desde el oeste">O</button>
+            <button type="button" data-view="iso" title="Vista isométrica">ISO</button>
+          </div>
+          <button type="button" id="projectionToggle" class="projection-toggle" aria-pressed="false" title="Alterna proyección en perspectiva y ortográfica">Ortográfica: desactivada</button>
+        </div>
         <div class="model-caption"><div class="caption-top"><span class="caption-dot">●</span><span id="stateText">Preparando visualización…</span></div><p id="modelDescription">Selecciona un modelo del catálogo para explorar su geometría y texturas.</p></div>
-        <div class="view-bottom-right"><span>CALIDAD GRÁFICA</span><input type="range" id="qualityRange" min="4" max="32" step="2" value="12" title="Menor valor = mayor detalle"><small id="qualityLabel">Alta</small></div>
+        <div class="view-bottom-right"><label for="qualityRange">CALIDAD GRÁFICA</label><input type="range" id="qualityRange" min="0" max="3" step="1" value="2" aria-label="Calidad de visualización" aria-describedby="qualityDetails" title="Ajusta resolución y nivel de detalle"><strong id="qualityLabel">Alta</strong><small id="qualityDetails">Resolución 100% · umbral LOD 10 px</small></div>
         <div class="coordinates" id="coords">POSICIÓN · —</div>
       </section>
       <footer class="footer"><div class="footer-item"><span>FORMATO</span><b id="footerFormat">Cesium 3D Tiles 1.1</b></div><div class="footer-item"><span>PROYECCIÓN</span><b id="footerProjection">Georreferenciada</b></div><div class="footer-item"><span>ENTORNO</span><b>GitHub Pages</b></div><div class="footer-item footer-switch"><label><input type="checkbox" id="globeToggle" checked> Mostrar globo</label></div></footer>
@@ -45,6 +65,6 @@
   <div class="toast" id="toast" aria-live="polite"></div>
   <script src="https://cdn.jsdelivr.net/npm/cesium@1.138.0/Build/Cesium/Cesium.js"></script>
   <script src="assets/models.js"></script>
-  <script defer src="assets/app.js"></script>
+  <script defer src="assets/app.js?v=2"></script>
 </body>
 </html>

@@ -1,10 +1,11 @@
-/* GeoBIM Viewer v2.0. CesiumJS 1.138.0 | GitHub Pages. */
+/* GeoBIM Viewer v3.0. CesiumJS 1.138.0 | GitHub Pages. */
 (() => {
   'use strict';
   const $ = id => document.getElementById(id);
   const models = Array.isArray(window.GEOBIM_MODELS) ? [...window.GEOBIM_MODELS] : [];
   let viewer, currentTileset = null, currentModel = null;
-  let toastTimer = null, measuring = false, measurePoints = [], measureEntities = [];
+  let toastTimer = null, measureMode = null, lastMeasureMode = null;
+  let measurePoints = [], measureEntities = [], measureFinished = false;
   let clicks;
 
   // Escala de renderizado + refinamiento de teselas; el LOD no inventa detalles.
@@ -131,49 +132,241 @@
     }
   }
 
-  function resetMeasure() {
+  // Mediciones sobre el 3D Tiles: distancias 3D y áreas horizontales (plano ENU local).
+  const MEASURE_MODES = {
+    distance: {name: 'Distancia', minimum: 2, instructions: 'Marca dos puntos sobre el modelo.'},
+    route: {name: 'Polilínea 3D', minimum: 2, instructions: 'Marca los vértices de la ruta y pulsa Finalizar.'},
+    area: {name: 'Área en planta', minimum: 3, instructions: 'Marca el perímetro del polígono y pulsa Finalizar.'}
+  };
+  const distanceFormat = new Intl.NumberFormat('es-EC', {maximumFractionDigits: 2, minimumFractionDigits: 2});
+
+  function formatLength(metres) {
+    return metres >= 1000 ? distanceFormat.format(metres / 1000) + ' km' : distanceFormat.format(metres) + ' m';
+  }
+  function formatArea(metresSquared) {
+    return metresSquared >= 10000
+      ? distanceFormat.format(metresSquared) + ' m² (' + distanceFormat.format(metresSquared / 10000) + ' ha)'
+      : distanceFormat.format(metresSquared) + ' m²';
+  }
+  function totalLength(points, closed = false) {
+    let total = 0;
+    for (let i = 1; i < points.length; i++) total += Cesium.Cartesian3.distance(points[i - 1], points[i]);
+    if (closed && points.length >= 3) total += Cesium.Cartesian3.distance(points[points.length - 1], points[0]);
+    return total;
+  }
+  function localPolygon(points) {
+    const frame = Cesium.Transforms.eastNorthUpToFixedFrame(points[0]);
+    const inverse = Cesium.Matrix4.inverseTransformation(frame, new Cesium.Matrix4());
+    return points.map(p => {
+      const local = Cesium.Matrix4.multiplyByPoint(inverse, p, new Cesium.Cartesian3());
+      return {x: local.x, y: local.y};
+    });
+  }
+  function horizontalArea(points) {
+    if (points.length < 3) return 0;
+    const xy = localPolygon(points);
+    let doubleArea = 0;
+    for (let i = 0; i < xy.length; i++) {
+      const a = xy[i], b = xy[(i + 1) % xy.length];
+      doubleArea += a.x * b.y - b.x * a.y;
+    }
+    return Math.abs(doubleArea) / 2;
+  }
+  function polygonSelfIntersects(points) {
+    if (points.length < 4) return false;
+    const xy = localPolygon(points), n = xy.length;
+    const cross = (a, b, c) => (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
+    for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) {
+      if (j === i + 1 || (i === 0 && j === n - 1)) continue;
+      const a = xy[i], b = xy[(i + 1) % n], c = xy[j], d = xy[(j + 1) % n];
+      if (cross(a, b, c) * cross(a, b, d) < 0 && cross(c, d, a) * cross(c, d, b) < 0) return true;
+    }
+    return false;
+  }
+  function clearMeasurementGraphics() {
     if (viewer) for (const entity of measureEntities) viewer.entities.remove(entity);
-    measureEntities = []; measurePoints = []; measuring = false;
-    $('measureBtn').classList.remove('active');
+    measureEntities = [];
+  }
+  function resetMeasure() {
+    clearMeasurementGraphics();
+    measurePoints = [];
+    measureMode = null;
+    lastMeasureMode = null;
+    measureFinished = false;
+    for (const id of ['measureBtn', 'routeBtn', 'areaBtn']) $(id).classList.remove('active');
+    $('measurePanel').hidden = true;
     $('cesiumContainer').style.cursor = 'auto';
     if (viewer) viewer.scene.requestRender();
   }
-  function beginMeasure() {
+  function beginMeasure(mode) {
+    if (!currentTileset) {
+      notify('Selecciona un modelo antes de medir.');
+      return;
+    }
+    if (measureMode === mode) { resetMeasure(); return; }
     resetMeasure();
-    measuring = true;
-    $('measureBtn').classList.add('active');
+    measureMode = mode;
+    lastMeasureMode = mode;
+    $('measurePanel').hidden = false;
     $('cesiumContainer').style.cursor = 'crosshair';
-    notify('Selecciona dos puntos sobre el modelo para medir la distancia 3D.');
+    ({distance: $('measureBtn'), route: $('routeBtn'), area: $('areaBtn')})[mode].classList.add('active');
+    $('measureModeLabel').textContent = MEASURE_MODES[mode].name;
+    $('measureInstruction').textContent = MEASURE_MODES[mode].instructions;
+    updateMeasurePanel();
+    notify(MEASURE_MODES[mode].instructions);
   }
   function pickedPosition(screenPosition) {
-    let point;
+    // No usar pickEllipsoid como alternativa: podría medir el globo en vez del modelo.
     try {
-      if (viewer.scene.pickPositionSupported && viewer.scene.pick(screenPosition)) {
-        point = viewer.scene.pickPosition(screenPosition);
-      }
-    } catch (_e) { /* Ignorar y probar posición sobre el elipsoide */ }
-    if (!Cesium.defined(point)) point = viewer.camera.pickEllipsoid(screenPosition, viewer.scene.globe.ellipsoid);
-    return point;
+      const scene = viewer.scene;
+      if (!scene.pickPositionSupported || !Cesium.defined(scene.pick(screenPosition))) return undefined;
+      const point = scene.pickPosition(screenPosition);
+      return Cesium.defined(point) ? point : undefined;
+    } catch (e) {
+      console.warn('No se pudo seleccionar la geometría:', e);
+      return undefined;
+    }
   }
-  function addMeasurementPoint(point) {
-    const entity = viewer.entities.add({position: point, point: {pixelSize: 10, color: Cesium.Color.CYAN, outlineColor: Cesium.Color.BLACK, outlineWidth: 2, disableDepthTestDistance: Number.POSITIVE_INFINITY}});
-    measureEntities.push(entity);
-    measurePoints.push(point);
-    if (measurePoints.length === 2) {
-      const a = measurePoints[0], b = measurePoints[1];
-      const distance = Cesium.Cartesian3.distance(a, b);
-      const middle = Cesium.Cartesian3.midpoint(a, b, new Cesium.Cartesian3());
+  function updateMeasurePanel() {
+    const mode = lastMeasureMode;
+    if (!mode) return;
+    const n = measurePoints.length;
+    $('measureCount').textContent = n + (n === 1 ? ' punto' : ' puntos');
+    const closed = mode === 'area';
+    const length = totalLength(measurePoints, closed && n >= 3);
+    if (closed) {
+      $('measureStats').textContent = n >= 3
+        ? 'Área horizontal: ' + formatArea(horizontalArea(measurePoints)) + ' · Perímetro 3D: ' + formatLength(length)
+        : 'Selecciona al menos 3 puntos para calcular el área.';
+    } else {
+      $('measureStats').textContent = n >= 2
+        ? 'Longitud 3D acumulada: ' + formatLength(length)
+        : 'Selecciona al menos 2 puntos.';
+    }
+    $('finishMeasureBtn').disabled = measureFinished || !measureMode || n < MEASURE_MODES[mode].minimum;
+    $('undoMeasureBtn').disabled = n === 0;
+    $('measureInstruction').textContent = measureFinished
+      ? 'Medición finalizada. Puedes deshacer el último punto o empezar otra.'
+      : MEASURE_MODES[mode].instructions;
+  }
+  function drawMeasurement() {
+    clearMeasurementGraphics();
+    const points = measurePoints, mode = lastMeasureMode;
+    if (!viewer || !mode || !points.length) return;
+    const color = mode === 'area' ? Cesium.Color.YELLOW : Cesium.Color.CYAN;
+    if (mode === 'area' && points.length >= 3) {
       measureEntities.push(viewer.entities.add({
-        polyline: {positions: [a,b], width: 3, material: Cesium.Color.CYAN, depthFailMaterial: Cesium.Color.CYAN},
-        position: middle,
-        label: {text: distance >= 1000 ? `${(distance / 1000).toFixed(3)} km` : `${distance.toFixed(2)} m`, font: 'bold 15px sans-serif', fillColor: Cesium.Color.WHITE, outlineColor: Cesium.Color.BLACK, outlineWidth: 4, style: Cesium.LabelStyle.FILL_AND_OUTLINE, pixelOffset: new Cesium.Cartesian2(0, -24), disableDepthTestDistance: Number.POSITIVE_INFINITY}
+        polygon: {
+          hierarchy: new Cesium.PolygonHierarchy([...points]),
+          perPositionHeight: true,
+          material: Cesium.Color.YELLOW.withAlpha(0.19),
+          outline: false
+        }
       }));
-      measuring = false;
-      $('measureBtn').classList.remove('active');
-      $('cesiumContainer').style.cursor = 'auto';
-      $('stateText').textContent = `Distancia entre puntos: ${distance.toFixed(2)} m`;
+    }
+    if (points.length >= 2) {
+      const positions = mode === 'area' && points.length >= 3 ? [...points, points[0]] : [...points];
+      measureEntities.push(viewer.entities.add({
+        polyline: {positions, width: 3, material: color, depthFailMaterial: color}
+      }));
+      // Longitud individual de cada tramo, con etiquetas hasta 25 tramos.
+      if (mode !== 'area' && points.length <= 26) {
+        for (let i = 1; i < points.length; i++) {
+          const mid = Cesium.Cartesian3.midpoint(points[i - 1], points[i], new Cesium.Cartesian3());
+          measureEntities.push(viewer.entities.add({
+            position: mid,
+            label: {
+              text: formatLength(Cesium.Cartesian3.distance(points[i - 1], points[i])),
+              font: '12px sans-serif', fillColor: Cesium.Color.WHITE,
+              outlineColor: Cesium.Color.BLACK, outlineWidth: 3,
+              style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+              pixelOffset: new Cesium.Cartesian2(0, -15),
+              disableDepthTestDistance: Number.POSITIVE_INFINITY
+            }
+          }));
+        }
+      }
+    }
+    points.forEach((point, i) => {
+      measureEntities.push(viewer.entities.add({
+        position: point,
+        point: {
+          pixelSize: 9, color, outlineColor: Cesium.Color.BLACK,
+          outlineWidth: 2, disableDepthTestDistance: Number.POSITIVE_INFINITY
+        },
+        label: {
+          text: String(i + 1), font: 'bold 11px sans-serif',
+          fillColor: Cesium.Color.WHITE, outlineColor: Cesium.Color.BLACK,
+          outlineWidth: 3, style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+          pixelOffset: new Cesium.Cartesian2(12, 9),
+          disableDepthTestDistance: Number.POSITIVE_INFINITY
+        }
+      }));
+    });
+    if (measureFinished) {
+      const result = mode === 'area' ? formatArea(horizontalArea(points)) : formatLength(totalLength(points));
+      measureEntities.push(viewer.entities.add({
+        position: points[points.length - 1],
+        label: {
+          text: (mode === 'area' ? 'Área horizontal: ' : 'Total: ') + result,
+          font: 'bold 15px sans-serif', fillColor: color,
+          outlineColor: Cesium.Color.BLACK, outlineWidth: 4,
+          style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+          pixelOffset: new Cesium.Cartesian2(0, -34),
+          disableDepthTestDistance: Number.POSITIVE_INFINITY
+        }
+      }));
     }
     viewer.scene.requestRender();
+  }
+  function addMeasurementPoint(point) {
+    if (!measureMode) return;
+    const previous = measurePoints[measurePoints.length - 1];
+    if (previous && Cesium.Cartesian3.distance(previous, point) < 0.02) {
+      notify('Selecciona un punto diferente (mínimo 2 cm de separación).');
+      return;
+    }
+    measurePoints.push(point);
+    if (measureMode === 'distance' && measurePoints.length === 2) {
+      finishMeasurement();
+    } else {
+      drawMeasurement();
+      updateMeasurePanel();
+    }
+  }
+  function finishMeasurement() {
+    if (!measureMode) return;
+    const mode = measureMode;
+    if (measurePoints.length < MEASURE_MODES[mode].minimum) {
+      notify('Faltan puntos para finalizar esta medición.');
+      return;
+    }
+    if (mode === 'area' && polygonSelfIntersects(measurePoints)) {
+      notify('El perímetro se cruza consigo mismo. Deshaz puntos y corrige el polígono.');
+      return;
+    }
+    measureMode = null;
+    measureFinished = true;
+    $('cesiumContainer').style.cursor = 'auto';
+    for (const id of ['measureBtn', 'routeBtn', 'areaBtn']) $(id).classList.remove('active');
+    drawMeasurement();
+    updateMeasurePanel();
+    $('stateText').textContent = mode === 'area'
+      ? 'Área horizontal: ' + formatArea(horizontalArea(measurePoints))
+      : 'Distancia 3D: ' + formatLength(totalLength(measurePoints));
+    notify('Medición finalizada.');
+  }
+  function undoMeasurePoint() {
+    if (!measurePoints.length || !lastMeasureMode) return;
+    if (measureFinished) {
+      measureMode = lastMeasureMode;
+      measureFinished = false;
+      $('cesiumContainer').style.cursor = 'crosshair';
+      ({distance: $('measureBtn'), route: $('routeBtn'), area: $('areaBtn')})[measureMode].classList.add('active');
+    }
+    measurePoints.pop();
+    drawMeasurement();
+    updateMeasurePanel();
   }
 
   async function share() {
@@ -254,7 +447,7 @@
       viewer.camera.setView({destination: Cesium.Cartesian3.fromDegrees(-78.91, -0.34, 15000)});
       clicks = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
       clicks.setInputAction(event => {
-        if (!measuring) return;
+        if (!measureMode) return;
         const point = pickedPosition(event.position);
         if (!Cesium.defined(point)) { notify('Haz clic sobre una superficie visible.'); return; }
         addMeasurementPoint(point);
@@ -271,8 +464,19 @@
       });
       $('menuToggle').addEventListener('click', () => $('sidebar').classList.toggle('open'));
       $('zoomBtn').addEventListener('click', () => { if (currentTileset) viewer.zoomTo(currentTileset); else notify('Selecciona primero un modelo.'); });
-      $('measureBtn').addEventListener('click', () => measuring ? resetMeasure() : beginMeasure());
+      $('measureBtn').addEventListener('click', () => beginMeasure('distance'));
+      $('routeBtn').addEventListener('click', () => beginMeasure('route'));
+      $('areaBtn').addEventListener('click', () => beginMeasure('area'));
+      $('finishMeasureBtn').addEventListener('click', finishMeasurement);
+      $('undoMeasureBtn').addEventListener('click', undoMeasurePoint);
+      $('clearMeasureBtn').addEventListener('click', () => { resetMeasure(); notify('Mediciones eliminadas.'); });
       $('resetMeasureBtn').addEventListener('click', () => { resetMeasure(); notify('Mediciones eliminadas.'); });
+      document.addEventListener('keydown', event => {
+        if (!measureMode || ['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) return;
+        if (event.key === 'Enter') { event.preventDefault(); finishMeasurement(); }
+        if (event.key === 'Escape') { event.preventDefault(); resetMeasure(); }
+        if (event.key === 'Backspace') { event.preventDefault(); undoMeasurePoint(); }
+      });
       $('qualityRange').addEventListener('input', setQuality);
       document.querySelectorAll('[data-view]').forEach(btn => {
         btn.addEventListener('click', () => selectView(btn.dataset.view));

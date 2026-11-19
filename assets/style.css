@@ -31,3 +31,31 @@ button.cube-face:hover,button.cube-face:focus-visible,button.cube-face[aria-pres
  .view-bottom-right label{font-size:9px}.view-bottom-right strong{font-size:10px}.view-bottom-right small{font-size:9px}
  .coordinates{bottom:95px;right:10px}
 }
+
+
+/* GeoBIM Viewer v3 - mediciones de polilíneas y áreas */
+.measure-panel[hidden]{display:none!important}
+.measure-panel{position:absolute;z-index:5;top:74px;left:22px;width:min(315px,calc(100% - 260px));padding:13px 14px;background:#102035ee;border:1px solid #4b6b83;border-radius:11px;box-shadow:0 10px 36px #0007;backdrop-filter:blur(10px)}
+.measure-panel-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.measure-panel-head strong{font-size:13px;color:#e8f6ff}
+.measure-panel-head span{font-size:10px;color:var(--accent);white-space:nowrap}
+.measure-panel p{font-size:11px;color:#c7d9e7;line-height:1.5;margin:9px 0}
+.measure-result{padding:9px 10px;border:1px solid #35566c;background:#172e43;border-radius:7px;color:#f5f9ff;font-size:12px;font-weight:700;line-height:1.6}
+.measure-actions{display:flex;gap:5px;margin-top:10px}
+.measure-actions button{flex:1;min-width:0;padding:8px 4px;border:1px solid #54768e;background:#26465e;color:#e9f7ff;border-radius:6px;font-size:11px;font-weight:700}
+.measure-actions button:first-child{background:#23667c}
+.measure-actions button:hover:not(:disabled){background:#397a90}
+.measure-actions button:disabled{opacity:.4;cursor:not-allowed}
+.measure-panel>small{display:block;margin-top:9px;font-size:9px;color:#9db5c8;line-height:1.45}
+.view-top-right{z-index:6}
+@media(max-width:1050px){
+ .measure-panel{width:min(285px,calc(100% - 240px))}
+ .view-top-right{gap:5px}
+ .tool-btn{padding:8px 9px}
+}
+@media(max-width:770px){
+ .measure-panel{top:258px;left:10px;width:min(290px,calc(100% - 20px));padding:10px 11px}
+ .measure-panel>small{font-size:9px}
+ .view-top-right{gap:4px}
+ .tool-btn{padding:7px 8px}
+}

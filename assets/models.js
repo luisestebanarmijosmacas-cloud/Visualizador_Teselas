@@ -11,6 +11,17 @@ window.GEOBIM_MODELS = [
     projection: "WGS84 / ECEF",
     description: "Escena 3D sintética, creada únicamente para comprobar el visor. No representa una central hidroeléctrica real.",
     url: "modelos/demo/tileset.json"
+  },
+  {
+    id: "vis-comp",
+    name: "Vis_Comp · Modelo fotogramétrico",
+    category: "FOTOGRAMETRÍA",
+    location: "Modelo personalizado",
+    year: "2026",
+    format: "Cesium 3D Tiles",
+    projection: "WGS84 / ECEF",
+    description: "Modelo teselado exportado desde Agisoft Metashape.",
+    url: "modelos/Vis_Comp/tileset.json"
   }
 
   // EJEMPLO PARA AÑADIR UN PROYECTO REAL:

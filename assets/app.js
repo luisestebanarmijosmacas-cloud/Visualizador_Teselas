@@ -1,4 +1,4 @@
-/* GeoBIM Viewer v5.0. CesiumJS 1.138.0 | GitHub Pages. */
+/* GeoBIM Viewer v6.0. CesiumJS 1.138.0 | GitHub Pages. */
 (() => {
   'use strict';
   const $ = id => document.getElementById(id);
@@ -88,6 +88,7 @@
     resetMeasure();
     window.GeoBIMProfiles?.resetForModel();
     window.GeoBIMTopo?.resetForModel();
+    window.GeoBIMLevels?.resetForModel();
   }
 
   async function loadModel(model, updateHistory = true) {
@@ -203,6 +204,7 @@
   function beginMeasure(mode) {
     window.GeoBIMProfiles?.close();
     window.GeoBIMTopo?.close();
+    window.GeoBIMLevels?.close();
     if (!currentTileset) {
       notify('Selecciona un modelo antes de medir.');
       return;
@@ -451,6 +453,10 @@
       viewer.camera.setView({destination: Cesium.Cartesian3.fromDegrees(-78.91, -0.34, 15000)});
       clicks = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
       clicks.setInputAction(event => {
+        if (window.GeoBIMLevels?.isPicking()) {
+          window.GeoBIMLevels.pick(event.position);
+          return;
+        }
         if (window.GeoBIMTopo?.isPicking()) {
           window.GeoBIMTopo.pick(event.position);
           return;
@@ -524,6 +530,15 @@
       } else {
         $('topoBtn').disabled = true;
         console.warn('El módulo topográfico no está disponible.');
+      }
+      if (window.GeoBIMLevels) {
+        window.GeoBIMLevels.init({
+          Cesium, viewer, getTileset: () => currentTileset,
+          notify, stopMeasurements: resetMeasure
+        });
+      } else {
+        $('levelsBtn').disabled=true;
+        console.warn('El módulo de cotas no está disponible.');
       }
       renderModels(); setQuality(); updateViewCube();
       const params = new URLSearchParams(window.location.search);

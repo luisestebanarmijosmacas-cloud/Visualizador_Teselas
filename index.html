@@ -8,7 +8,7 @@
   <title>GeoBIM Viewer · Portafolio 3D</title>
   <script>window.CESIUM_BASE_URL = 'https://cdn.jsdelivr.net/npm/cesium@1.138.0/Build/Cesium/';</script>
   <link href="https://cdn.jsdelivr.net/npm/cesium@1.138.0/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
-  <link href="assets/style.css?v=2" rel="stylesheet">
+  <link href="assets/style.css?v=3" rel="stylesheet">
 </head>
 <body>
   <div class="layout">
@@ -33,7 +33,24 @@
       <section class="viewport" aria-label="Visualización tridimensional">
         <div id="cesiumContainer"></div>
         <div class="view-top-left"><span class="system-label">ESPACIO DE VISUALIZACIÓN 3D</span><span class="model-type" id="modelType">3D TILES</span></div>
-        <div class="view-top-right"><button type="button" class="tool-btn" id="zoomBtn" title="Enfocar modelo">◎ <span>Encuadrar</span></button><button type="button" class="tool-btn" id="measureBtn" title="Medir entre dos puntos">⌁ <span>Medir</span></button><button type="button" class="tool-btn" id="resetMeasureBtn" title="Borrar medición">× <span>Limpiar</span></button></div>
+        <div class="view-top-right">
+          <button type="button" class="tool-btn" id="zoomBtn" title="Enfocar modelo" aria-label="Encuadrar modelo">◎ <span>Encuadrar</span></button>
+          <button type="button" class="tool-btn" id="measureBtn" title="Distancia entre dos puntos" aria-label="Medir distancia entre dos puntos">⌁ <span>2 puntos</span></button>
+          <button type="button" class="tool-btn" id="routeBtn" title="Medir ruta 3D con varios puntos" aria-label="Medir polilínea o ruta">⌁ <span>Polilínea</span></button>
+          <button type="button" class="tool-btn" id="areaBtn" title="Medir área horizontal de un polígono" aria-label="Medir área">▱ <span>Área</span></button>
+          <button type="button" class="tool-btn" id="resetMeasureBtn" title="Borrar medición" aria-label="Limpiar mediciones">× <span>Limpiar</span></button>
+        </div>
+        <div class="measure-panel" id="measurePanel" hidden aria-live="polite">
+          <div class="measure-panel-head"><strong id="measureModeLabel">Medición</strong><span id="measureCount">0 puntos</span></div>
+          <p id="measureInstruction">Selecciona puntos sobre el modelo.</p>
+          <div class="measure-result" id="measureStats">Selecciona puntos.</div>
+          <div class="measure-actions">
+            <button type="button" id="finishMeasureBtn" disabled title="Finalizar (Enter)">Finalizar</button>
+            <button type="button" id="undoMeasureBtn" disabled title="Deshacer punto (Retroceso)">Deshacer</button>
+            <button type="button" id="clearMeasureBtn" title="Borrar medición (Escape)">Limpiar</button>
+          </div>
+          <small>Enter: finalizar · Retroceso: deshacer · Esc: limpiar</small>
+        </div>
         <div class="loading-layer" id="loadingLayer" role="status"><div class="load-spinner"></div><strong id="loadingTitle">Preparando escena…</strong><span id="loadingDetail">Inicializando motor 3D</span></div>
         <div class="orientation-widget" aria-label="ViewCube y vistas del modelo">
           <div class="orientation-title"><span>VIEWCUBE</span><small id="viewLabel">VISTA · LIBRE</small></div>
@@ -65,6 +82,6 @@
   <div class="toast" id="toast" aria-live="polite"></div>
   <script src="https://cdn.jsdelivr.net/npm/cesium@1.138.0/Build/Cesium/Cesium.js"></script>
   <script src="assets/models.js"></script>
-  <script defer src="assets/app.js?v=2"></script>
+  <script defer src="assets/app.js?v=3"></script>
 </body>
 </html>

@@ -8,7 +8,7 @@
   <title>GeoBIM Viewer · Portafolio 3D</title>
   <script>window.CESIUM_BASE_URL = 'https://cdn.jsdelivr.net/npm/cesium@1.138.0/Build/Cesium/';</script>
   <link href="https://cdn.jsdelivr.net/npm/cesium@1.138.0/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
-  <link href="assets/style.css?v=5" rel="stylesheet">
+  <link href="assets/style.css?v=6" rel="stylesheet">
 </head>
 <body>
   <div class="layout">
@@ -40,7 +40,36 @@
           <button type="button" class="tool-btn" id="areaBtn" title="Medir área horizontal de un polígono" aria-label="Medir área">▱ <span>Área</span></button>
           <button type="button" class="tool-btn profile-tool-btn" id="profileBtn" title="Perfiles longitudinales y transversales" aria-label="Abrir perfiles topográficos">⌁ <span>Perfiles</span></button>
           <button type="button" class="tool-btn topo-tool-btn" id="topoBtn" title="Coordenadas XYZ, pendiente y desnivel" aria-label="Herramientas topográficas">⊕ <span>Topografía</span></button>
+          <button type="button" class="tool-btn levels-tool-btn" id="levelsBtn" title="Colocar cotas de elevación y mostrar curvas de nivel" aria-label="Cotas y curvas de nivel">⌖ <span>Cotas</span></button>
           <button type="button" class="tool-btn" id="resetMeasureBtn" title="Borrar medición" aria-label="Limpiar mediciones">× <span>Limpiar</span></button>
+        </div>
+        <div class="levels-panel" id="levelsPanel" hidden aria-label="Cotas puntuales y curvas de nivel">
+          <div class="levels-head">
+            <div><strong>Cotas y curvas de nivel</strong><small>FOTOGRAMETRÍA · WGS84</small></div>
+            <button type="button" id="levelsClose" aria-label="Cerrar cotas" title="Cerrar cotas">×</button>
+          </div>
+          <p id="levelsStatus" class="levels-status" aria-live="polite">Haz clic sobre el modelo 3D para colocar cotas.</p>
+          <div class="levels-row">
+            <span id="levelsCount">0 cotas</span>
+            <label for="levelsOffset">Ajuste de cota (m)</label>
+            <input id="levelsOffset" type="number" value="0" step="0.01" min="-10000" max="10000" title="Corrección manual solo para etiquetas y CSV, no cambia las coordenadas" />
+          </div>
+          <div class="levels-buttons">
+            <button type="button" id="levelsUndo" disabled>Deshacer</button>
+            <button type="button" id="levelsClear">Borrar cotas</button>
+            <button type="button" id="levelsExport" disabled>↓ CSV</button>
+          </div>
+          <div class="levels-divider"></div>
+          <div class="levels-contours-header"><strong>Curvas de nivel</strong><small>Capa vectorial externa</small></div>
+          <p class="levels-description">Importa un archivo GeoJSON WGS84 con líneas que incluyan coordenada Z o atributo de elevación. Las curvas deben proceder de un DEM validado, no se generan desde la textura.</p>
+          <label class="levels-file-label" for="levelsContoursFile">Seleccionar GeoJSON de curvas</label>
+          <input id="levelsContoursFile" type="file" accept=".geojson,.json,application/geo+json,application/json" />
+          <div class="levels-curve-row">
+            <span id="levelsContoursCount">Sin curvas cargadas</span>
+            <label><input id="levelsContoursVisible" type="checkbox" checked disabled /> Visibles</label>
+          </div>
+          <button type="button" id="levelsContoursClear" class="levels-clear-contours" disabled>Quitar curvas</button>
+          <div class="levels-warning">Las cotas se obtienen de la malla 3D en altura elipsoidal WGS84. El ajuste solo afecta a las etiquetas; para que las curvas coincidan con la malla, deben estar georreferenciadas en el mismo sistema horizontal y vertical. No corresponde automáticamente al datum local ni a una cota sobre el nivel del mar.</div>
         </div>
         <div class="topo-panel" id="topoPanel" hidden aria-label="Coordenadas y mediciones topográficas">
           <div class="topo-head">
@@ -139,8 +168,9 @@
   <div class="toast" id="toast" aria-live="polite"></div>
   <script src="https://cdn.jsdelivr.net/npm/cesium@1.138.0/Build/Cesium/Cesium.js"></script>
   <script src="assets/models.js"></script>
-  <script src="assets/profiles.js?v=5"></script>
-  <script src="assets/topography.js?v=5"></script>
-  <script defer src="assets/app.js?v=5"></script>
+  <script src="assets/profiles.js?v=6"></script>
+  <script src="assets/topography.js?v=6"></script>
+  <script src="assets/levels.js?v=6"></script>
+  <script defer src="assets/app.js?v=6"></script>
 </body>
 </html>

@@ -8,7 +8,7 @@
   <title>GeoBIM Viewer · Portafolio 3D</title>
   <script>window.CESIUM_BASE_URL = 'https://cdn.jsdelivr.net/npm/cesium@1.138.0/Build/Cesium/';</script>
   <link href="https://cdn.jsdelivr.net/npm/cesium@1.138.0/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
-  <link href="assets/style.css?v=4" rel="stylesheet">
+  <link href="assets/style.css?v=5" rel="stylesheet">
 </head>
 <body>
   <div class="layout">
@@ -39,7 +39,34 @@
           <button type="button" class="tool-btn" id="routeBtn" title="Medir ruta 3D con varios puntos" aria-label="Medir polilínea o ruta">⌁ <span>Polilínea</span></button>
           <button type="button" class="tool-btn" id="areaBtn" title="Medir área horizontal de un polígono" aria-label="Medir área">▱ <span>Área</span></button>
           <button type="button" class="tool-btn profile-tool-btn" id="profileBtn" title="Perfiles longitudinales y transversales" aria-label="Abrir perfiles topográficos">⌁ <span>Perfiles</span></button>
+          <button type="button" class="tool-btn topo-tool-btn" id="topoBtn" title="Coordenadas XYZ, pendiente y desnivel" aria-label="Herramientas topográficas">⊕ <span>Topografía</span></button>
           <button type="button" class="tool-btn" id="resetMeasureBtn" title="Borrar medición" aria-label="Limpiar mediciones">× <span>Limpiar</span></button>
+        </div>
+        <div class="topo-panel" id="topoPanel" hidden aria-label="Coordenadas y mediciones topográficas">
+          <div class="topo-head">
+            <div><strong>Herramientas topográficas</strong><small>COORDENADAS · PENDIENTES · DESNIVELES</small></div>
+            <button type="button" id="topoCloseBtn" title="Cerrar topografía" aria-label="Cerrar topografía">×</button>
+          </div>
+          <p class="topo-help" id="topoSummary" aria-live="polite">Selecciona el punto A y después el punto B.</p>
+          <div class="topo-points">
+            <div class="topo-point" id="topoPointA">PUNTO A</div>
+            <div class="topo-point" id="topoPointB">PUNTO B</div>
+          </div>
+          <div class="topo-results" aria-label="Resultados de segmento A a B">
+            <div><span>Desnivel B − A</span><strong id="topoDelta">—</strong></div>
+            <div><span>Horizontal ENU</span><strong id="topoHorizontal">—</strong></div>
+            <div><span>Distancia 3D</span><strong id="topoSpatial">—</strong></div>
+            <div><span>Pendiente</span><strong id="topoSlope">—</strong></div>
+            <div><span>Ángulo vertical</span><strong id="topoAngle">—</strong></div>
+            <div><span>Azimut</span><strong id="topoAzimuth">—</strong></div>
+          </div>
+          <div class="topo-enu" id="topoEnu">—</div>
+          <div class="topo-actions">
+            <button type="button" id="topoUndoBtn" disabled>Deshacer</button>
+            <button type="button" id="topoClearBtn">Nuevo segmento</button>
+            <button type="button" id="topoExportBtn" disabled>↓ CSV</button>
+          </div>
+          <div class="topo-note">Coordenadas geográficas, UTM y XYZ sobre WGS84. Altura elipsoidal (NO ortométrica). Pendiente referida al plano horizontal ENU local en A. Las cifras no certifican precisión topográfica ni equivalen a coordenadas locales del proyecto.</div>
         </div>
         <div class="profile-panel" id="profilePanel" hidden aria-label="Generador de perfiles topográficos">
           <div class="profile-header"><div><strong>Perfiles topográficos</strong><small>3D TILES · METASHAPE</small></div><button type="button" id="profileCloseBtn" aria-label="Cerrar perfiles" title="Cerrar">×</button></div>
@@ -112,7 +139,8 @@
   <div class="toast" id="toast" aria-live="polite"></div>
   <script src="https://cdn.jsdelivr.net/npm/cesium@1.138.0/Build/Cesium/Cesium.js"></script>
   <script src="assets/models.js"></script>
-  <script src="assets/profiles.js?v=4"></script>
-  <script defer src="assets/app.js?v=4"></script>
+  <script src="assets/profiles.js?v=5"></script>
+  <script src="assets/topography.js?v=5"></script>
+  <script defer src="assets/app.js?v=5"></script>
 </body>
 </html>

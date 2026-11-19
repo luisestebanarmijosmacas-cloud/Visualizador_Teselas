@@ -220,9 +220,7 @@
         i===1&&d?d.enu.x.toFixed(4):'',i===1&&d?d.enu.y.toFixed(4):'',
         i===1&&d?d.enu.z.toFixed(4):''].join(';');
     });
-    const content='\uFEFF'+
-      '# GeoBIM Viewer;WGS84 altura elipsoidal;UTM WGS84;ENU local anclado en A;NO cota ortometrica\r\n'+
-      header.join(';')+'\r\n'+rows.join('\r\n')+'\r\n';
+    const content='\uFEFF'+header.join(';')+'\r\n'+rows.join('\r\n')+'\r\n';
     const url=URL.createObjectURL(new Blob([content],{type:'text/csv;charset=utf-8'}));
     const link=document.createElement('a');
     link.href=url;link.download='GeoBIM_Topografia_'+new Date().toISOString().slice(0,10)+'.csv';

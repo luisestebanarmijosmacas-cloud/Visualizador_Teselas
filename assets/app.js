@@ -1,4 +1,4 @@
-/* GeoBIM Viewer v4.0. CesiumJS 1.138.0 | GitHub Pages. */
+/* GeoBIM Viewer v5.0. CesiumJS 1.138.0 | GitHub Pages. */
 (() => {
   'use strict';
   const $ = id => document.getElementById(id);
@@ -87,6 +87,7 @@
     currentTileset = null;
     resetMeasure();
     window.GeoBIMProfiles?.resetForModel();
+    window.GeoBIMTopo?.resetForModel();
   }
 
   async function loadModel(model, updateHistory = true) {
@@ -201,6 +202,7 @@
   }
   function beginMeasure(mode) {
     window.GeoBIMProfiles?.close();
+    window.GeoBIMTopo?.close();
     if (!currentTileset) {
       notify('Selecciona un modelo antes de medir.');
       return;
@@ -449,6 +451,10 @@
       viewer.camera.setView({destination: Cesium.Cartesian3.fromDegrees(-78.91, -0.34, 15000)});
       clicks = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
       clicks.setInputAction(event => {
+        if (window.GeoBIMTopo?.isPicking()) {
+          window.GeoBIMTopo.pick(event.position);
+          return;
+        }
         if (window.GeoBIMProfiles?.isPicking()) {
           window.GeoBIMProfiles.pick(event.position);
           return;
@@ -509,6 +515,15 @@
       } else {
         $('profileBtn').disabled = true;
         console.warn('El módulo de perfiles no está disponible.');
+      }
+      if (window.GeoBIMTopo) {
+        window.GeoBIMTopo.init({
+          Cesium, viewer, getTileset: () => currentTileset,
+          notify, stopMeasurements: resetMeasure
+        });
+      } else {
+        $('topoBtn').disabled = true;
+        console.warn('El módulo topográfico no está disponible.');
       }
       renderModels(); setQuality(); updateViewCube();
       const params = new URLSearchParams(window.location.search);

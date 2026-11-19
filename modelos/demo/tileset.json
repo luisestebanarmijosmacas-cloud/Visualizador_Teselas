@@ -1,0 +1,142 @@
+{
+  "asset": {
+    "version": "1.1",
+    "tilesetVersion": "2026-demo-2"
+  },
+  "geometricError": 100,
+  "root": {
+    "boundingVolume": {
+      "box": [
+        0,
+        0,
+        25,
+        160,
+        0,
+        0,
+        0,
+        160,
+        0,
+        0,
+        0,
+        110
+      ]
+    },
+    "geometricError": 45,
+    "refine": "ADD",
+    "transform": [
+      0.9812926639922451,
+      0.19252196652590745,
+      0,
+      0,
+      0.001176042455241856,
+      -0.005994338488730135,
+      0.9999813422410571,
+      0,
+      0.19251837449746478,
+      -0.9812743552702679,
+      -0.006108614390678361,
+      0,
+      1228226.3762470486,
+      -6260322.1569047235,
+      -38710.83989347775,
+      1
+    ],
+    "content": {
+      "uri": "estructura.glb"
+    },
+    "children": [
+      {
+        "boundingVolume": {
+          "box": [
+            -56.0,
+            52.5,
+            25,
+            57.0,
+            0,
+            0,
+            0,
+            53.5,
+            0,
+            0,
+            0,
+            90
+          ]
+        },
+        "geometricError": 0,
+        "refine": "ADD",
+        "content": {
+          "uri": "terreno_0_0.glb"
+        }
+      },
+      {
+        "boundingVolume": {
+          "box": [
+            -56.0,
+            -52.5,
+            25,
+            57.0,
+            0,
+            0,
+            0,
+            53.5,
+            0,
+            0,
+            0,
+            90
+          ]
+        },
+        "geometricError": 0,
+        "refine": "ADD",
+        "content": {
+          "uri": "terreno_0_1.glb"
+        }
+      },
+      {
+        "boundingVolume": {
+          "box": [
+            56.0,
+            52.5,
+            25,
+            57.0,
+            0,
+            0,
+            0,
+            53.5,
+            0,
+            0,
+            0,
+            90
+          ]
+        },
+        "geometricError": 0,
+        "refine": "ADD",
+        "content": {
+          "uri": "terreno_1_0.glb"
+        }
+      },
+      {
+        "boundingVolume": {
+          "box": [
+            56.0,
+            -52.5,
+            25,
+            57.0,
+            0,
+            0,
+            0,
+            53.5,
+            0,
+            0,
+            0,
+            90
+          ]
+        },
+        "geometricError": 0,
+        "refine": "ADD",
+        "content": {
+          "uri": "terreno_1_1.glb"
+        }
+      }
+    ]
+  }
+}

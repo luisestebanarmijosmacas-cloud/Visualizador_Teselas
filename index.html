@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Visualizador web de modelos fotogramétricos 3D Tiles y portafolio técnico BIM.">
+  <meta name="theme-color" content="#0d1727">
+  <title>GeoBIM Viewer · Portafolio 3D</title>
+  <script>window.CESIUM_BASE_URL = 'https://cdn.jsdelivr.net/npm/cesium@1.138.0/Build/Cesium/';</script>
+  <link href="https://cdn.jsdelivr.net/npm/cesium@1.138.0/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+  <link href="assets/style.css" rel="stylesheet">
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand"><span class="brand-mark" aria-hidden="true">◈</span><div><strong>GeoBIM <em>Viewer</em></strong><small>PORTAFOLIO DE MODELOS 3D</small></div></div>
+      <div class="side-title"><span>EXPLORADOR DE PROYECTOS</span><span id="modelCount">0 modelos</span></div>
+      <label for="modelSearch" class="sr-only">Buscar modelos</label>
+      <div class="search-box"><span aria-hidden="true">⌕</span><input id="modelSearch" type="search" placeholder="Buscar proyecto…" autocomplete="off"></div>
+      <div class="model-list" id="modelList" aria-label="Lista de modelos"></div>
+      <div class="sidebar-bottom">
+        <div class="help-title">¿TIENES OTRO TILESET?</div>
+        <p>Pega la dirección pública de un <code>tileset.json</code> (con CORS habilitado si es externo).</p>
+        <form id="urlForm"><label for="tilesetUrl" class="sr-only">Dirección del tileset JSON</label><input id="tilesetUrl" type="url" placeholder="https://…/tileset.json" required><button type="submit" class="button button-secondary">Abrir URL ↗</button></form>
+      </div>
+    </aside>
+    <main class="main">
+      <header class="topbar">
+        <button type="button" class="mobile-only icon-btn" id="menuToggle" aria-label="Mostrar proyectos">☰</button>
+        <div><div class="eyebrow">VISUALIZADOR GEOSPACIAL / 3D TILES</div><h1 id="modelTitle">Explorador 3D</h1></div>
+        <div class="header-actions"><span class="live-pill"><i aria-hidden="true"></i> ONLINE · CESIUMJS</span><button type="button" class="button button-ghost" id="shareBtn" title="Copiar enlace del modelo">Compartir ↗</button></div>
+      </header>
+      <section class="viewport" aria-label="Visualización tridimensional">
+        <div id="cesiumContainer"></div>
+        <div class="view-top-left"><span class="system-label">ESPACIO DE VISUALIZACIÓN 3D</span><span class="model-type" id="modelType">3D TILES</span></div>
+        <div class="view-top-right"><button type="button" class="tool-btn" id="zoomBtn" title="Enfocar modelo">◎ <span>Encuadrar</span></button><button type="button" class="tool-btn" id="measureBtn" title="Medir entre dos puntos">⌁ <span>Medir</span></button><button type="button" class="tool-btn" id="resetMeasureBtn" title="Borrar medición">× <span>Limpiar</span></button></div>
+        <div class="loading-layer" id="loadingLayer" role="status"><div class="load-spinner"></div><strong id="loadingTitle">Preparando escena…</strong><span id="loadingDetail">Inicializando motor 3D</span></div>
+        <div class="model-caption"><div class="caption-top"><span class="caption-dot">●</span><span id="stateText">Preparando visualización…</span></div><p id="modelDescription">Selecciona un modelo del catálogo para explorar su geometría y texturas.</p></div>
+        <div class="view-bottom-right"><span>CALIDAD GRÁFICA</span><input type="range" id="qualityRange" min="4" max="32" step="2" value="12" title="Menor valor = mayor detalle"><small id="qualityLabel">Alta</small></div>
+        <div class="coordinates" id="coords">POSICIÓN · —</div>
+      </section>
+      <footer class="footer"><div class="footer-item"><span>FORMATO</span><b id="footerFormat">Cesium 3D Tiles 1.1</b></div><div class="footer-item"><span>PROYECCIÓN</span><b id="footerProjection">Georreferenciada</b></div><div class="footer-item"><span>ENTORNO</span><b>GitHub Pages</b></div><div class="footer-item footer-switch"><label><input type="checkbox" id="globeToggle" checked> Mostrar globo</label></div></footer>
+    </main>
+  </div>
+  <div class="toast" id="toast" aria-live="polite"></div>
+  <script src="https://cdn.jsdelivr.net/npm/cesium@1.138.0/Build/Cesium/Cesium.js"></script>
+  <script src="assets/models.js"></script>
+  <script defer src="assets/app.js"></script>
+</body>
+</html>

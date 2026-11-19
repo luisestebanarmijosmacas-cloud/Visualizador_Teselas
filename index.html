@@ -8,7 +8,7 @@
   <title>GeoBIM Viewer · Portafolio 3D</title>
   <script>window.CESIUM_BASE_URL = 'https://cdn.jsdelivr.net/npm/cesium@1.138.0/Build/Cesium/';</script>
   <link href="https://cdn.jsdelivr.net/npm/cesium@1.138.0/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
-  <link href="assets/style.css?v=3" rel="stylesheet">
+  <link href="assets/style.css?v=4" rel="stylesheet">
 </head>
 <body>
   <div class="layout">
@@ -38,7 +38,37 @@
           <button type="button" class="tool-btn" id="measureBtn" title="Distancia entre dos puntos" aria-label="Medir distancia entre dos puntos">⌁ <span>2 puntos</span></button>
           <button type="button" class="tool-btn" id="routeBtn" title="Medir ruta 3D con varios puntos" aria-label="Medir polilínea o ruta">⌁ <span>Polilínea</span></button>
           <button type="button" class="tool-btn" id="areaBtn" title="Medir área horizontal de un polígono" aria-label="Medir área">▱ <span>Área</span></button>
+          <button type="button" class="tool-btn profile-tool-btn" id="profileBtn" title="Perfiles longitudinales y transversales" aria-label="Abrir perfiles topográficos">⌁ <span>Perfiles</span></button>
           <button type="button" class="tool-btn" id="resetMeasureBtn" title="Borrar medición" aria-label="Limpiar mediciones">× <span>Limpiar</span></button>
+        </div>
+        <div class="profile-panel" id="profilePanel" hidden aria-label="Generador de perfiles topográficos">
+          <div class="profile-header"><div><strong>Perfiles topográficos</strong><small>3D TILES · METASHAPE</small></div><button type="button" id="profileCloseBtn" aria-label="Cerrar perfiles" title="Cerrar">×</button></div>
+          <div class="profile-inputs">
+            <label>Tipo de perfil
+              <select id="profileMode">
+                <option value="longitudinal">Longitudinal · varios vértices</option>
+                <option value="transversal">Transversal · dos extremos</option>
+              </select>
+            </label>
+            <label>Intervalo de muestreo
+              <select id="profileSpacing">
+                <option value="0.5">0,5 m</option><option value="1">1 m</option>
+                <option value="2" selected>2 m</option><option value="5">5 m</option>
+                <option value="10">10 m</option>
+              </select>
+            </label>
+          </div>
+          <div class="profile-guidance"><span id="profileCount">0 vértices</span><p id="profileStatus" aria-live="polite">Marca puntos sobre la superficie del modelo.</p></div>
+          <div class="profile-actions">
+            <button type="button" id="profileGenerateBtn" disabled>Generar perfil</button>
+            <button type="button" id="profileUndoBtn" disabled>Deshacer</button>
+            <button type="button" id="profileNewBtn">Nuevo eje</button>
+          </div>
+          <div class="profile-chart-wrap"><svg id="profileChart" viewBox="0 0 680 255" role="img" aria-label="Gráfico de distancia horizontal frente a cota elipsoidal"><text x="340" y="112" text-anchor="middle" fill="#a9c0d1" font-size="15">Dibuja un eje para comenzar</text></svg></div>
+          <div class="profile-summary" id="profileSummary">Sin perfil calculado</div>
+          <div class="profile-stats" id="profileStats">Cota mínima: — · Cota máxima: — · Desnivel: —</div>
+          <button type="button" id="profileExportBtn" class="profile-export" disabled>↓ Exportar CSV de puntos</button>
+          <div class="profile-note">Distancia horizontal geodésica · altura elipsoidal WGS84. Máximo 300 muestras. No sustituye un MDT validado para cálculos de ingeniería.</div>
         </div>
         <div class="measure-panel" id="measurePanel" hidden aria-live="polite">
           <div class="measure-panel-head"><strong id="measureModeLabel">Medición</strong><span id="measureCount">0 puntos</span></div>
@@ -82,6 +112,7 @@
   <div class="toast" id="toast" aria-live="polite"></div>
   <script src="https://cdn.jsdelivr.net/npm/cesium@1.138.0/Build/Cesium/Cesium.js"></script>
   <script src="assets/models.js"></script>
-  <script defer src="assets/app.js?v=3"></script>
+  <script src="assets/profiles.js?v=4"></script>
+  <script defer src="assets/app.js?v=4"></script>
 </body>
 </html>

@@ -92,6 +92,7 @@
   }
   function toggle() {
     if (active) { close(); return; }
+    window.GeoBIMTopo?.close();
     if (!getTileset()) { notify('Abre un modelo antes de generar perfiles.'); return; }
     active = true;
     collecting = true;

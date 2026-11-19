@@ -1,4 +1,4 @@
-/* GeoBIM Viewer v3.0. CesiumJS 1.138.0 | GitHub Pages. */
+/* GeoBIM Viewer v4.0. CesiumJS 1.138.0 | GitHub Pages. */
 (() => {
   'use strict';
   const $ = id => document.getElementById(id);
@@ -86,6 +86,7 @@
     }
     currentTileset = null;
     resetMeasure();
+    window.GeoBIMProfiles?.resetForModel();
   }
 
   async function loadModel(model, updateHistory = true) {
@@ -199,6 +200,7 @@
     if (viewer) viewer.scene.requestRender();
   }
   function beginMeasure(mode) {
+    window.GeoBIMProfiles?.close();
     if (!currentTileset) {
       notify('Selecciona un modelo antes de medir.');
       return;
@@ -447,6 +449,10 @@
       viewer.camera.setView({destination: Cesium.Cartesian3.fromDegrees(-78.91, -0.34, 15000)});
       clicks = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
       clicks.setInputAction(event => {
+        if (window.GeoBIMProfiles?.isPicking()) {
+          window.GeoBIMProfiles.pick(event.position);
+          return;
+        }
         if (!measureMode) return;
         const point = pickedPosition(event.position);
         if (!Cesium.defined(point)) { notify('Haz clic sobre una superficie visible.'); return; }
@@ -496,6 +502,14 @@
         $('coords').textContent = `CÁMARA · ${lat}°, ${lon}° · ${Math.max(0, position.height).toFixed(0)} m`;
         updateViewCube();
       });
+      if (window.GeoBIMProfiles) {
+        window.GeoBIMProfiles.init({
+          Cesium, viewer, getTileset: () => currentTileset, notify
+        });
+      } else {
+        $('profileBtn').disabled = true;
+        console.warn('El módulo de perfiles no está disponible.');
+      }
       renderModels(); setQuality(); updateViewCube();
       const params = new URLSearchParams(window.location.search);
       const external = params.get('tileset');

@@ -95,3 +95,34 @@ button.cube-face:hover,button.cube-face:focus-visible,button.cube-face[aria-pres
  .view-top-right .tool-btn{padding:6px 7px}
  .view-top-right .tool-btn span{display:none}
 }
+
+/* GeoBIM Viewer v5 - panel topográfico sobre las teselas fotogramétricas */
+.topo-panel[hidden]{display:none!important}
+.topo-panel{position:absolute;z-index:8;top:74px;left:21px;width:min(580px,calc(100% - 260px));max-height:calc(100% - 92px);overflow-y:auto;padding:15px;background:#0f2135f5;color:#e8f5fc;border:1px solid #52718b;border-radius:12px;box-shadow:0 15px 46px #0009;backdrop-filter:blur(12px)}
+.topo-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.topo-head strong{font-size:15px}
+.topo-head small{display:block;margin-top:5px;font-size:9px;letter-spacing:.7px;font-weight:800;color:var(--accent)}
+.topo-head>button{font-size:23px;border:1px solid #416379;border-radius:6px;color:#e5f3fc;background:#1b3650;padding:1px 9px;line-height:1.1}
+.topo-help{padding:10px 11px;color:#cfe4f0;background:#1a3047;border:1px solid #34556b;font-size:11px;border-radius:8px;line-height:1.5;margin:12px 0}
+.topo-points{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.topo-point{white-space:pre-line;border:1px solid #385e77;background:#142d44;padding:10px 11px;border-radius:8px;font-size:11px;line-height:1.65;color:#e6f5ff;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.topo-point:first-line{font-weight:850;color:#78d4ee}
+.topo-point:nth-child(2){border-color:#6c694b}
+.topo-point:nth-child(2):first-line{color:#f3cf75}
+.topo-results{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}
+.topo-results>div{display:flex;justify-content:space-between;flex-direction:column;gap:4px;background:#142e44;border:1px solid #33576d;padding:9px 10px;border-radius:7px}
+.topo-results span{font-size:10px;color:#a8c7d9}
+.topo-results strong{font-size:15px;color:#f1f8ff;font-variant-numeric:tabular-nums}
+.topo-enu{margin-top:9px;font-size:10px;color:#bfddeb;line-height:1.5}
+.topo-actions{display:grid;grid-template-columns:1fr 1.1fr .8fr;gap:7px;margin-top:12px}
+.topo-actions button{font-weight:800;color:#f2fbff;background:#21536a;border:1px solid #538398;border-radius:7px;padding:9px 6px;font-size:11px}
+.topo-actions button:hover:not(:disabled){background:#2e7890}
+.topo-actions button:disabled{opacity:.42;cursor:not-allowed}
+.topo-note{margin-top:11px;font-size:9px;line-height:1.55;color:#a8bfd0}
+@media(max-width:1050px){.topo-panel{width:min(490px,calc(100% - 240px))}.topo-point{font-size:10px;padding:8px}}
+@media(max-width:770px){
+ .topo-panel{top:245px;left:10px;width:calc(100% - 20px);max-height:calc(100% - 287px);padding:11px}
+ .topo-point{font-size:10px;padding:7px;line-height:1.55}
+ .topo-results strong{font-size:13px}
+ .view-top-right{flex-wrap:wrap;justify-content:flex-end;max-width:calc(100% - 24px)}
+}
